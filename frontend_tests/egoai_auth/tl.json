@@ -1,0 +1,36 @@
+[
+    {
+        "type": "function",
+        "function": {
+            "name": "check_plan",
+            "description": "Reads index.html, styles.css, script.js, and plan.md files and returns their contents for analysis",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "args": {
+                        "type": "string",
+                        "description": "Optional arguments (not used, can be empty string)"
+                    }
+                },
+                "required": ["args"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "append_to_plan",
+            "description": "Appends content to plan.md file with 3-4 line spacing",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "args": {            
+                        "type": "string",
+                        "description": "The content to append to plan.md"
+                    }
+                },
+                "required": ["args"]
+            }
+        }
+    }
+]

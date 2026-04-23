@@ -1,0 +1,339 @@
+:root {
+  /* Color Scheme */
+  --primary-color: #00d9ff;
+  --primary-light: #66ffff;
+  --primary-dark: #0080ff;
+  --secondary-color: #ff00ff;
+  --success-color: #00ff00;
+  --danger-color: #ff0000;
+  --light-bg: #1a1a2e;
+  --dark-text: #ffffff;
+  --border-color: #333366;
+  --shadow-color: rgba(0, 255, 255, 0.3);
+  --transition-speed: 0.4s;
+  /* Typography */
+  --base-font-size: 18px;
+  --line-height: 1.8;
+  /* Chart-specific variables */
+  --chart-primary: #00d9ff;
+  --chart-secondary: #ff00ff;
+  --chart-accent: #00ff00;
+  --chart-bg: rgba(26, 26, 46, 0.8);
+  --chart-border: #333366;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Orbitron', sans-serif;
+    font-size: var(--base-font-size);
+    line-height: var(--line-height);
+    color: var(--dark-text);
+    height: 100vh;
+}
+
+.container {
+    display: flex;
+    height: 100%;
+}
+
+.sidebar {
+    width: 200px;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    padding: 20px;
+    border-right: 2px solid var(--primary-color);
+    box-shadow: 0 4px 30px rgba(0, 255, 255, 0.5);
+}
+
+.sidebar ul {
+    list-style-type: none;
+}
+
+.sidebar-option {
+    display: block;
+    width: 100%;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    text-align: left;
+    border: none;
+    background: linear-gradient(to right, #00d9ff, #ff00ff);
+    color: white;
+    cursor: pointer;
+    transition: all var(--transition-speed);
+    border-radius: 0;
+}
+
+.sidebar-option:hover {
+    background: linear-gradient(to right, #0080ff, #cc00ff);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+    transform: translateY(-5px);
+}
+
+.sidebar-option.active {
+    background: var(--primary-dark);
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+}
+
+.main-content {
+    flex-grow: 1;
+    background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
+    padding: 30px;
+    display: block;
+}
+
+.content {
+    display: none;
+}
+
+.content.active {
+    display: block;
+}
+
+/* Form Styling */
+#training-form {
+    max-width: 500px;
+    margin-top: 20px;
+}
+
+.form-group {
+    margin-bottom: 8px; /* Reduced from 15px as per research */
+    display: flex; /* Added as per research */
+    flex-direction: column; /* Added as per research */
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: var(--dark-text);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 8px; /* Reduced from 12px as per research */
+    border: 2px solid var(--border-color);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--dark-text);
+    font-size: 16px; /* Changed from var(--base-font-size) to 16px as per research */
+    transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.form-group input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px var(--primary-light);
+    outline: none;
+}
+
+/* Updated button styles for futuristic effects with reduced padding */
+#plus-button, #save-button, #clear-button, #save-diet-button, #clear-diet-button, .analytics-buttons button {
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px; /* Reduced from 12px 24px as per research */
+    font-size: var(--base-font-size);
+    cursor: pointer;
+    margin-right: 10px;
+    transition: all var(--transition-speed);
+}
+
+#plus-button:hover, #save-button:hover, #clear-button:hover, #save-diet-button:hover, #clear-diet-button:hover, .analytics-buttons button:hover {
+    background: linear-gradient(45deg, var(--primary-dark), var(--secondary-color));
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+    transform: scale(1.05);
+}
+
+.form-buttons {
+    margin-top: 10px; /* Reduced from 20px as per plan step 10 */
+    display: flex; /* Added as per plan step 10 */
+    justify-content: space-between; /* Added as per plan step 10 */
+}
+
+/* Diet Form Styling */
+#diet-form {
+    max-width: 500px;
+    margin-top: 20px;
+}
+
+/* Analytics Display Styling */
+#analytics-content {
+    padding: 20px;
+}
+
+#training-summary, #diet-summary, #charts {
+    margin-bottom: 20px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: linear-gradient(to bottom, var(--light-bg), white);
+    box-shadow: 0 4px 6px var(--shadow-color);
+    transition: all var(--transition-speed) ease;
+}
+
+h2 {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+    color: var(--dark-text);
+}
+
+h3 {
+    color: var(--dark-text);
+    margin-bottom: 10px;
+    font-size: 1.25rem;
+}
+
+/* Updated #charts selector with futuristic styling */
+#charts {
+    background: linear-gradient(135deg, var(--light-bg), var(--chart-bg));
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 0 20px var(--shadow-color);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    min-height: 200px;
+}
+
+/* Updated #charts canvas selector for better visibility */
+#charts canvas {
+    width: 100%;
+    height: 300px;
+    margin: 15px 0;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--chart-border);
+    box-shadow: 0 0 10px var(--primary-light);
+    transition: all var(--transition-speed);
+    display: block;
+}
+
+/* Error Message Styling */
+.error-message {
+    color: var(--danger-color);
+    font-size: 0.9em;
+    margin-top: 5px;
+    display: block;
+    min-height: 20px;
+}
+
+/* Analytics Buttons */
+.analytics-buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+/* Training log container updated for compact, vertical layout as per plan and research */
+.training-log-container {
+    max-width: 300px; /* Reduced from 500px as per research */
+    margin: 0 auto;
+    text-align: left; /* Changed from right as per research */
+    border: 1px solid var(--border-color); /* Changed from 2px solid black as per research */
+    padding: 10px; /* Added as per plan step 8 */
+    border-radius: 5px; /* Added as per plan step 8 */
+}
+
+/* Additional fields styling as per plan step 9 */
+#additional-fields {
+    margin-top: 10px; /* Added as per plan step 9 */
+    padding: 0; /* Ensure no extra padding */
+}
+
+/* Responsive Design updates as per research step 5 */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        padding: 15px;
+    }
+    .sidebar ul {
+        display: flex;
+        justify-content: space-around;
+    }
+    .sidebar-option {
+        margin-bottom: 0;
+        margin-right: 10px;
+        width: auto;
+    }
+    .main-content {
+        padding: 15px;
+    }
+    #training-form {
+        max-width: 100%;
+    }
+    #diet-form {
+        max-width: 100%;
+    }
+    #analytics-content {
+        padding: 15px;
+    }
+    #training-summary, #diet-summary, #charts {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    #charts canvas {
+        height: 250px;
+    }
+    .training-log-container {
+        max-width: 100%; /* Added for responsiveness as per research */
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        font-size: 14px;
+    }
+    .sidebar ul {
+        flex-direction: column;
+    }
+    .sidebar-option {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    .form-group input {
+        font-size: 14px;
+        padding: 8px;
+    }
+    #plus-button, #save-button, #clear-button, #save-diet-button, #clear-diet-button {
+        padding: 8px 16px;
+        font-size: 14px;
+        margin-bottom: 5px;
+    }
+    .form-buttons {
+        display: flex;
+        flex-direction: column;
+    }
+    .form-buttons button {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    h2 {
+        font-size: 1.5rem;
+    }
+    h3 {
+        font-size: 1.1rem;
+    }
+    #training-summary, #diet-summary, #charts {
+        padding: 10px;
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+    #charts canvas {
+        height: 200px;
+        box-shadow: 0 0 5px var(--primary-light);
+    }
+    .analytics-buttons {
+        flex-direction: column;
+    }
+    .training-log-container {
+        max-width: 100%; /* Ensure full width on small screens as per research */
+    }
+}

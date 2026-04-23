@@ -1,0 +1,7 @@
+1. Structure: Modify index.html to change the login form input IDs to 'login-email' and 'login-password', and update the label 'for' attributes accordingly for accessibility.
+2. Structure: Add a new div inside .form-container in index.html for the registration form, containing input fields with ids: 'reg-firstname', 'reg-lastname', 'reg-email', 'reg-password', 'reg-confirmpassword', and buttons with ids 'submit-register-btn' and 'cancel-btn'. Add class 'hidden' to this div initially.
+3. Styling: Add CSS rule to styles.css: .hidden { display: none; } to hide the registration form by default.
+4. Logic: Modify script.js to update the validatePassword function to use document.getElementById('reg-password') and document.getElementById('reg-confirmpassword') for validation.
+5. Logic: Modify script.js to change the event listener for #register-btn from handleButtonClick to a new function that hides the login form div and shows the registration form div by toggling the 'hidden' class.
+6. Logic: Modify script.js to change the event listener for #cancel-btn to hide the registration form and show the login form instead of setting window.location.href.
+7. Integration: Update script.js to ensure that the handleButtonClick function is attached to #signin-btn and #submit-register-btn for loading simulation, and that validatePassword is called on #submit-register-btn click.

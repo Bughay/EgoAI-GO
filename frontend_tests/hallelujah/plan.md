@@ -1,0 +1,3 @@
+8. Open styles.css and modify .training-log-container to add padding: 10px; and border-radius: 5px; for a tighter, more compact appearance.
+9. Open styles.css and adjust #additional-fields to set margin-top: 10px; and ensure no extra padding or margins that add unnecessary space.
+10. Open styles.css and modify .form-buttons to reduce margin-top from 20px to 10px and add display: flex; justify-content: space-between; to align the save and clear buttons horizontally without extra vertical space.
