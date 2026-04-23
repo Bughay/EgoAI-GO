@@ -1,0 +1,148 @@
+package deepseek
+
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+	"time"
+)
+
+type React struct {
+	Conversation []AgentResponse
+}
+
+type AgentResponse struct {
+	Reasoning   string
+	Act         string
+	Observation string
+}
+
+type Agent struct {
+	SystemPrompt string
+	UserPrompt   string
+	Memory       []Message
+	Tools        []Tool
+	Registry     map[string]func(string) (string, error)
+	Path         string
+}
+
+func (a *Agent) oneloop(messages []Message) (*AgentResponse, error) {
+
+	var rawResponse string
+	var resp AgentResponse
+	var err error
+	for retries := 0; retries < 3; retries++ {
+		rawResponse, err = DeepseekOneshotJSON(messages, 0.1, 64000)
+		if err != nil {
+			fmt.Printf("DEBUG: API error on retry %d: %v\n", retries, err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+
+		err = json.Unmarshal([]byte(rawResponse), &resp)
+		// fmt.Printf("Reasoning:%s \n", resp.Reasoning)
+		// fmt.Printf("Act:%s \n", resp.Act)
+		if err == nil {
+			return &resp, nil
+		}
+	}
+
+	return nil, fmt.Errorf("failed after 3 retries: %w", err)
+}
+
+func (a *Agent) Run() (*AgentResponse, error) {
+	// Step 1: Initialize memory with user prompt
+
+	toolsDesc, err := ToolsToLLMString(a.Path)
+	if err != nil {
+		return nil, fmt.Errorf("load tools: %w", err)
+	}
+
+	fullSystemPrompt := fmt.Sprintf(`
+	You are a ReAct agent that solves problems through reasoning and tool use.
+	The Task you will be solving:
+	%s
+
+	Available tools:
+	%s
+
+	You must respond in this exact JSON format:
+	{
+	    "reasoning": "your step-by-step thinking about what to do",
+	    "act": "tool_name|arg1,arg2 OR finish|your_final_answer",
+	    "observation": ""
+	}
+
+	If you need a tool, use "act": "tool_name|arguments".
+	If you have the answer, use "act": "finish|your answer here".`,
+		a.SystemPrompt, toolsDesc)
+
+	a.Memory = []Message{
+		{Role: "system", Content: fullSystemPrompt},
+		{Role: "user", Content: a.UserPrompt},
+	}
+	maxIterations := 100
+
+	for i := 0; i < maxIterations; i++ {
+
+		// Step 2: Call oneloop (it reads a.Memory internally)
+		resp, err := a.oneloop(a.Memory)
+		if err != nil {
+			return nil, err
+		}
+
+		// Step 3: Check if finished
+		if strings.HasPrefix(resp.Act, "finish|") {
+			resp.Observation = strings.TrimPrefix(resp.Act, "finish|")
+			return resp, nil
+		}
+
+		// Step 4: Parse tool call
+		parts := strings.SplitN(resp.Act, "|", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid act format: %s", resp.Act)
+		}
+		toolName, toolArgs := parts[0], parts[1]
+
+		// Step 5: Find and execute tool
+		observation := fmt.Sprintf("Tool not found: %s", toolName)
+		if executeFunc, exists := a.Registry[toolName]; exists {
+			result, err := executeFunc(toolArgs)
+			if err != nil {
+				observation = fmt.Sprintf("Error: %v", err)
+			} else {
+				observation = result
+			}
+		}
+
+		assistantContent := fmt.Sprintf("Reasoning: %s\nAct: %s", resp.Reasoning, resp.Act)
+		a.Memory = append(a.Memory,
+			Message{Role: "assistant", Content: assistantContent},
+			Message{Role: "user", Content: "Observation: " + observation},
+		)
+		time.Sleep(2 * time.Second)
+
+	}
+
+	return nil, fmt.Errorf("max iterations reached")
+}
+
+func (a *Agent) PrintConversation() {
+	fmt.Println("=== Conversation History ===")
+	for _, msg := range a.Memory {
+		fmt.Println("============================")
+		fmt.Printf("[%s]: %s\n", strings.ToUpper(msg.Role), msg.Content)
+		fmt.Println("============================")
+	}
+	fmt.Println("============================")
+}
+
+func (a *Agent) PrintMemory() {
+	fmt.Println("=== Memory History ===")
+	fmt.Println(a.Memory)
+	for i, chat := range a.Memory {
+		fmt.Printf("Chat number %d\n", i)
+		fmt.Println(chat)
+	}
+	fmt.Println("============================")
+}
