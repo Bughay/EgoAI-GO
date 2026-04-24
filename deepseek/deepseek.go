@@ -20,12 +20,14 @@ type Message struct {
 }
 
 type ChatTemplate struct {
-	Model          string          `json:"model"`
-	Messages       []Message       `json:"messages"`
-	Stream         bool            `json:"stream"`
-	Temperature    float64         `json:"temperature"`
-	MaxTokens      int             `json:"max_tokens,omitempty"`
-	ResponseFormat *ResponseFormat `json:"response_format,omitempty"`
+	Model           string                 `json:"model"`
+	Messages        []Message              `json:"messages"`
+	Stream          bool                   `json:"stream"`
+	Temperature     float64                `json:"temperature"`
+	MaxTokens       int                    `json:"max_tokens,omitempty"`
+	ResponseFormat  *ResponseFormat        `json:"response_format,omitempty"`
+	ReasoningEffort string                 `json:"reasoning_effort,omitempty"`
+	ExtraBody       map[string]interface{} `json:"extra_body,omitempty"`
 }
 
 type ResponseFormat struct {
@@ -111,6 +113,8 @@ func DeepseekOneshotJSON(messages []Message, temperature float64, maxTokens int)
 	if apiKey == "" {
 		return "", fmt.Errorf("DEEPSEEKAPIKEY not set")
 	}
+	// extraBody := make(map[string]interface{})
+	// extraBody["thinking"] = map[string]string{"type": "enabled"}
 
 	chat := &ChatTemplate{
 		Model:          "deepseek-reasoner",
@@ -119,6 +123,8 @@ func DeepseekOneshotJSON(messages []Message, temperature float64, maxTokens int)
 		Temperature:    temperature,
 		MaxTokens:      maxTokens,
 		ResponseFormat: &ResponseFormat{Type: "json_object"},
+		// ReasoningEffort: "max",
+		// ExtraBody:       extraBody,
 	}
 
 	jsonData, _ := json.Marshal(chat)

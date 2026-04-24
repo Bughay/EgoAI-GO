@@ -11,8 +11,10 @@ import (
 func VanillaFrontEnd() {
 	if UMessage, err := helper.Input("Welcome to Vanilla FrontEnd Agent\n Please write your user request: "); err == nil {
 		fileList := []string{"index.html", "styles.css", "script.js"}
-		researchFiles, _ := helper.ViewFiles(fileList)
-
+		researchFiles, err := helper.ViewFiles(fileList)
+		if err != nil {
+			fmt.Println("Error when trying to view the files")
+		}
 		systemMsgResearch := prompts.ProjectManager
 		systemMsgPlan := prompts.Teamlead
 
@@ -33,8 +35,10 @@ func VanillaFrontEnd() {
 		fmt.Println(plan)
 
 		ExecuterAgentRegistry := tools.FileFunctions()
-		executeTools, _ := deepseek.LoadToolsFromFile("tools/frontend_executer.json")
-
+		executeTools, err := deepseek.LoadToolsFromFile("tools/frontend_executer.json")
+		if err != nil {
+			fmt.Println("error trying to execute Tools")
+		}
 		agent := &deepseek.Agent{
 
 			SystemPrompt: prompts.ExecuteAgent,

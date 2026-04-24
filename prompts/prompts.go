@@ -80,8 +80,7 @@ You will receive high level plan from your project manager with a step by step e
 EXECUTION RULES:
 - start by analyzing the plan.md file
 - analyze the files before applying changes.
-- Solve the problems step by step based on the files written
-- Follow plan.md instructions
+- Solve the problems step by step following the plan
 - If instruction says "Add class="max"", add exactly that
 - If instruction says "Change color to red", change to exactly red (#ff0000 or red)
 - Do not skip steps

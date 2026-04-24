@@ -1,7 +1,9 @@
 package main
 
 import (
+	"agent/deepseek"
 	"agent/helper"
+	"agent/prompts"
 	"agent/workflows"
 	"fmt"
 )
@@ -17,11 +19,15 @@ func main() {
 		switch input {
 		case "frontend":
 			workflows.VanillaFrontEnd()
-		case "backend":
-			fmt.Println("Backend soon")
+
+		case "chat":
+			err := deepseek.DeepseekMemoryLoop(prompts.BackendAssistant, 0.3, 4500)
+			if err != nil {
+				fmt.Println("chat error:", err)
+			}
 		case "q":
 			fmt.Println("Exiting...")
-			return // exits main cleanly
+			return
 		default:
 			fmt.Println("please enter the correct command")
 		}
