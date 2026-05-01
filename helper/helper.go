@@ -58,3 +58,44 @@ func AppendToFile(filepath string, content string) (string, error) {
 	}
 	return fmt.Sprintf("Successfully appended %d bytes to %s", n, filepath), nil
 }
+
+func EditFile(path, search, replace string) (string, error) {
+	// Validate inputs
+	if path == "" {
+		return "", fmt.Errorf("editFileByPath: empty file path")
+	}
+	if search == "" {
+		return "", fmt.Errorf("editFileByPath: search block cannot be empty")
+	}
+
+	// Read current file content
+	original, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", fmt.Errorf("editFileByPath: file does not exist: %s", path)
+		}
+		return "", fmt.Errorf("editFileByPath: failed to read %s: %v", path, err)
+	}
+	content := string(original)
+
+	// Count exact occurrences of search string
+	count := strings.Count(content, search)
+
+	// Safety checks
+	if count == 0 {
+		return "", fmt.Errorf("editFileByPath: search block not found (exact match required) in %s", path)
+	}
+	if count > 1 {
+		return "", fmt.Errorf("editFileByPath: ambiguous: search block appears %d times in %s. Add more context lines", count, path)
+	}
+
+	// Perform replacement
+	newContent := strings.Replace(content, search, replace, 1)
+
+	// Direct write (no backup)
+	if err := os.WriteFile(path, []byte(newContent), 0644); err != nil {
+		return "", fmt.Errorf("editFileByPath: failed to write file: %v", err)
+	}
+
+	return fmt.Sprintf("SUCCESS: replaced 1 occurrence in %s", path), nil
+}

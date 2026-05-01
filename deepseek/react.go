@@ -12,18 +12,19 @@ type React struct {
 }
 
 type AgentResponse struct {
-	Reasoning   string
-	Act         string
-	Observation string
+	Reasoning string
+	Act       string
 }
 
 type Agent struct {
+	Model        string
 	SystemPrompt string
 	UserPrompt   string
 	Memory       []Message
 	Tools        []Tool
 	Registry     map[string]func(string) (string, error)
 	Path         string
+	MaxTokens    int
 }
 
 func (a *Agent) oneloop(messages []Message) (*AgentResponse, error) {
@@ -32,7 +33,7 @@ func (a *Agent) oneloop(messages []Message) (*AgentResponse, error) {
 	var resp AgentResponse
 	var err error
 	for retries := 0; retries < 3; retries++ {
-		rawResponse, err = DeepseekOneshotJSON(messages, 0.1, 64000)
+		rawResponse, err = DeepseekOneshotJSON(a.Model, messages, 0.2, a.MaxTokens)
 		if err != nil {
 			fmt.Printf("DEBUG: API error on retry %d: %v\n", retries, err)
 			time.Sleep(5 * time.Second)
@@ -70,9 +71,8 @@ func (a *Agent) Run() (*AgentResponse, error) {
 	{
 	    "reasoning": "your step-by-step thinking about what to do",
 	    "act": "tool_name|arg1,arg2 OR finish|your_final_answer",
-	    "observation": ""
 	}
-
+		
 	If you need a tool, use "act": "tool_name|arguments".
 	If you have the answer, use "act": "finish|your answer here".`,
 		a.SystemPrompt, toolsDesc)
@@ -93,7 +93,6 @@ func (a *Agent) Run() (*AgentResponse, error) {
 
 		// Step 3: Check if finished
 		if strings.HasPrefix(resp.Act, "finish|") {
-			resp.Observation = strings.TrimPrefix(resp.Act, "finish|")
 			return resp, nil
 		}
 

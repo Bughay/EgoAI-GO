@@ -12,9 +12,9 @@ func FileFunctions() map[string]func(string) (string, error) {
 		"analyze_html": AnalyzeHtml,
 		"analyze_css":  AnalyzeCss,
 		"analyze_js":   AnalyzeJS,
-		"update_html":  updateHTML,
-		"update_css":   updateCSS,
-		"update_js":    updateJS,
+		"update_html":  UpdateHTML,
+		"update_css":   UpdateCSS,
+		"update_js":    UpdateJS,
 	}
 }
 
@@ -64,7 +64,7 @@ func AnalyzeJS(args string) (string, error) {
 
 // updateHTML writes content to index.html (creates or overwrites)
 // args format: "content"
-func updateHTML(args string) (string, error) {
+func UpdateHTML(args string) (string, error) {
 	path := "index.html"
 	content := args
 
@@ -86,7 +86,7 @@ func updateHTML(args string) (string, error) {
 
 // updateCSS writes content to styles.css (creates or overwrites)
 // args format: "content"
-func updateCSS(args string) (string, error) {
+func UpdateCSS(args string) (string, error) {
 	path := "styles.css"
 	content := args
 
@@ -108,7 +108,7 @@ func updateCSS(args string) (string, error) {
 
 // updateJS writes content to script.js (creates or overwrites)
 // args format: "content"
-func updateJS(args string) (string, error) {
+func UpdateJS(args string) (string, error) {
 	path := "script.js"
 	content := args
 

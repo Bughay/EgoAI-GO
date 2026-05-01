@@ -19,9 +19,12 @@ func main() {
 		switch input {
 		case "frontend":
 			workflows.VanillaFrontEnd()
-
+		case "frontend-plan":
+			workflows.VanillaFrontPlan()
+		case "frontend-execute":
+			workflows.VanillaFrontExecute()
 		case "chat":
-			err := deepseek.DeepseekMemoryLoop(prompts.BackendAssistant, 0.3, 4500)
+			err := deepseek.DeepseekMemoryLoop(prompts.BackendAssistant, 0.3, 250000)
 			if err != nil {
 				fmt.Println("chat error:", err)
 			}

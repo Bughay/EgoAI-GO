@@ -23,7 +23,7 @@ type ChatTemplate struct {
 	Model           string                 `json:"model"`
 	Messages        []Message              `json:"messages"`
 	Stream          bool                   `json:"stream"`
-	Temperature     float64                `json:"temperature"`
+	Temperature     float64                `json:"temperature,omitempty"`
 	MaxTokens       int                    `json:"max_tokens,omitempty"`
 	ResponseFormat  *ResponseFormat        `json:"response_format,omitempty"`
 	ReasoningEffort string                 `json:"reasoning_effort,omitempty"`
@@ -43,12 +43,39 @@ type ChatResponse struct {
 	} `json:"choices"`
 }
 
+type ChatResponseFull struct {
+	ID      string `json:"id"`
+	Object  string `json:"object"`
+	Created int64  `json:"created"`
+	Model   string `json:"model"`
+	Choices []struct {
+		Index   int `json:"index"`
+		Message struct {
+			Role             string  `json:"role"`
+			Content          string  `json:"content"`
+			ReasoningContent *string `json:"reasoning_content,omitempty"` // for reasoning models
+			Refusal          *string `json:"refusal,omitempty"`
+		} `json:"message"`
+		FinishReason string `json:"finish_reason"`
+	} `json:"choices"`
+	Usage struct {
+		PromptTokens            int `json:"prompt_tokens"`
+		CompletionTokens        int `json:"completion_tokens"`
+		TotalTokens             int `json:"total_tokens"`
+		CompletionTokensDetails struct {
+			ReasoningTokens int `json:"reasoning_tokens"`
+		} `json:"completion_tokens_details,omitempty"`
+	} `json:"usage"`
+	SystemFingerprint string `json:"system_fingerprint"`
+}
+
 // const deepseekURL = "https://api.deepseek.com/v1/chat/completions"
+
 const deepseekURL = "https://api.deepseek.com/beta/v1/chat/completions"
 
 // const deepseekURL = "https://api.deepseek.com"
 
-func DeepseekOneshot(systemMessage string, userMessage string, temperature float64, maxTokens int) (string, error) {
+func DeepseekOneshot(model string, systemMessage string, userMessage string, temperature float64, maxTokens int) (string, error) {
 	if err := godotenv.Load(); err != nil {
 		return "", fmt.Errorf("load .env: %w", err)
 	}
@@ -58,15 +85,19 @@ func DeepseekOneshot(systemMessage string, userMessage string, temperature float
 		return "", fmt.Errorf("DEEPSEEKAPIKEY not set")
 	}
 
+	extraBody := make(map[string]interface{})
+	extraBody["thinking"] = map[string]string{"type": "enabled"}
 	chat := &ChatTemplate{
-		Model: "deepseek-reasoner",
+		Model: model,
 		Messages: []Message{
 			{Role: "system", Content: systemMessage},
 			{Role: "user", Content: userMessage},
 		},
-		Stream:      false,
-		Temperature: temperature,
-		MaxTokens:   maxTokens,
+		Stream:          false,
+		Temperature:     temperature,
+		MaxTokens:       maxTokens,
+		ReasoningEffort: "max",
+		ExtraBody:       extraBody,
 	}
 
 	jsonData, err := json.Marshal(chat)
@@ -93,7 +124,11 @@ func DeepseekOneshot(systemMessage string, userMessage string, temperature float
 		return "", fmt.Errorf("status %d: %s", resp.StatusCode, body)
 	}
 
-	var response ChatResponse
+	if err != nil {
+		return "", fmt.Errorf("read body: %w", err)
+	}
+
+	var response ChatResponseFull
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return "", fmt.Errorf("decode: %w", err)
 	}
@@ -101,10 +136,11 @@ func DeepseekOneshot(systemMessage string, userMessage string, temperature float
 	if len(response.Choices) == 0 {
 		return "", fmt.Errorf("no choices in response")
 	}
+
 	return response.Choices[0].Message.Content, nil
 }
 
-func DeepseekOneshotJSON(messages []Message, temperature float64, maxTokens int) (string, error) {
+func DeepseekOneshotJSON(model string, messages []Message, temperature float64, maxTokens int) (string, error) {
 	if err := godotenv.Load(); err != nil {
 		return "", fmt.Errorf("load .env: %w", err)
 	}
@@ -113,18 +149,19 @@ func DeepseekOneshotJSON(messages []Message, temperature float64, maxTokens int)
 	if apiKey == "" {
 		return "", fmt.Errorf("DEEPSEEKAPIKEY not set")
 	}
-	// extraBody := make(map[string]interface{})
-	// extraBody["thinking"] = map[string]string{"type": "enabled"}
+
+	extraBody := make(map[string]interface{})
+	extraBody["thinking"] = map[string]string{"type": "disabled"}
 
 	chat := &ChatTemplate{
-		Model:          "deepseek-reasoner",
-		Messages:       messages,
-		Stream:         false,
-		Temperature:    temperature,
-		MaxTokens:      maxTokens,
-		ResponseFormat: &ResponseFormat{Type: "json_object"},
-		// ReasoningEffort: "max",
-		// ExtraBody:       extraBody,
+		Model:           model,
+		Messages:        messages,
+		Stream:          false,
+		Temperature:     temperature,
+		MaxTokens:       maxTokens,
+		ResponseFormat:  &ResponseFormat{Type: "json_object"},
+		ReasoningEffort: "max",
+		ExtraBody:       extraBody,
 	}
 
 	jsonData, _ := json.Marshal(chat)
@@ -166,13 +203,53 @@ func DeepseekOneshotJSON(messages []Message, temperature float64, maxTokens int)
 	}
 	content := response.Choices[0].Message.Content
 	if strings.TrimSpace(content) == "" {
-		return "", fmt.Errorf("empty content in response,nothing returned")
+		fixedContent, _ := generateNormal(model, messages, temperature, maxTokens)
+		return fixedContent, nil
 	}
 
 	return content, nil
 }
 
-func DeepseekOneshotMemory(memory []Message, temperature float64, maxTokens int) (string, error) {
+func generateNormal(model string, messages []Message, temperature float64, maxTokens int) (string, error) {
+	fmt.Println("failed json output, we received an empty list")
+
+	text, err := DeepseekOneshotMemory(model, messages, 0.1, maxTokens)
+	if err != nil {
+		return "", fmt.Errorf("deepseek memory call failed: %w", err)
+	}
+	fmt.Println("converted to text succesfully:")
+	fmt.Println(text)
+
+	tools, err := ToolsToLLMString("tools/frontend_executer.json")
+	if err != nil {
+		return "", fmt.Errorf("tools failed to load: %w", tools)
+	}
+	system := `
+	
+	{
+	    "reasoning": "your step-by-step thinking about what to do",
+	    "act": "tool_name|arg1,arg2 OR finish|your_final_answer",
+	}
+	".
+	`
+	context := "I have another agent who is generating json output for me, however often times he fails and therefore i use another agent to give text output and then try to convert it to json again, you will receive that output and try to convert it to json object as per the schema and tools description "
+	jsonMessages := []Message{
+		{Role: "system", Content: context + "\nYou must respond in this exact JSON format:\n" + system + "\nHere are the tools schema: \n" + tools},
+		{Role: "user", Content: text},
+	}
+
+	fmt.Println("Now trying to convert back to JSON")
+	result, err := DeepseekOneshotJSON(model, jsonMessages, 0.1, maxTokens)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate JSON output: %w", err)
+	}
+
+	fmt.Println("converted to json succesfully")
+	fmt.Println(result)
+	return result, nil
+}
+
+func DeepseekOneshotMemory(model string, memory []Message, temperature float64, maxTokens int) (string, error) {
 	if err := godotenv.Load(); err != nil {
 		return "", fmt.Errorf("load .env: %w", err)
 	}
@@ -182,12 +259,16 @@ func DeepseekOneshotMemory(memory []Message, temperature float64, maxTokens int)
 		return "", fmt.Errorf("DEEPSEEKAPIKEY not set")
 	}
 
+	extraBody := make(map[string]interface{})
+	extraBody["thinking"] = map[string]string{"type": "enabled"}
 	chat := &ChatTemplate{
-		Model:       "deepseek-chat",
-		Messages:    memory,
-		Stream:      false,
-		Temperature: temperature,
-		MaxTokens:   maxTokens,
+		Model:           model,
+		Messages:        memory,
+		Stream:          false,
+		Temperature:     temperature,
+		MaxTokens:       maxTokens,
+		ReasoningEffort: "max",
+		ExtraBody:       extraBody,
 	}
 	jsonData, err := json.Marshal(chat)
 	if err != nil {
@@ -247,7 +328,7 @@ func DeepseekMemoryLoop(systemMessage string, temperature float64, maxTokens int
 
 		memory = append(memory, Message{Role: "user", Content: userMessage})
 
-		response, err := DeepseekOneshotMemory(memory, temperature, maxTokens)
+		response, err := DeepseekOneshotMemory("deepseek-v4-pro", memory, temperature, maxTokens)
 		if err != nil {
 			return fmt.Errorf("deepseek call: %w", err)
 		}
